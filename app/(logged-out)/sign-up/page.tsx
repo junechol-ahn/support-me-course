@@ -54,8 +54,23 @@ const formSchema = z
       );
       return date <= eighteenYearsAgo;
     }, "You must be at least 18 years old"),
+    password: z
+      .string()
+      .min(8, "Password must contain at least 8 characters")
+      .refine((password)=> {
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).*$/.test(password)
+      }, "must contain upper, lower, number & special character"),
+    passwordConfirm: z.string(),
   })
   .superRefine((data, ctx) => {
+    if (data.password !== data.passwordConfirm) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path:["passwordConfirm"],
+        message: "Passwords do not match"
+      })
+    }
+
     if (data.accountType === "company" && !data.companyName) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -216,6 +231,32 @@ export default function LoginPage() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="********" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="passwordConfirm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="********" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit">Sign up</Button>
             </form>
           </Form>
