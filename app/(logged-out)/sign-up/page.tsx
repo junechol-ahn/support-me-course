@@ -38,6 +38,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -45,6 +48,9 @@ const formSchema = z
     accountType: z.enum(["personal", "company"]),
     companyName: z.string().optional(),
     numberOfEmployees: z.coerce.number().optional(),
+    acceptTerms: z.boolean({
+      required_error:"You must accept terms and conditions"
+    }).refine((checked)=>checked, "You must accept terms and conditions"),
     dob: z.date().refine((date) => {
       const today = new Date();
       const eighteenYearsAgo = new Date(
@@ -92,6 +98,7 @@ const formSchema = z
   });
 
 export default function LoginPage() {
+  const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -99,11 +106,14 @@ export default function LoginPage() {
       accountType: "personal",
       companyName: "",
       numberOfEmployees: 0,
+      password:"",
+      passwordConfirm:"",
     },
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log("login validation passed", values);
+    router.push("/dashboard")
   };
 
   const onError = (e: FieldErrors<typeof formSchema>) => {
@@ -191,7 +201,11 @@ export default function LoginPage() {
                       <FormItem>
                         <FormLabel>Employees</FormLabel>
                         <FormControl>
-                          <Input type="number" min={0} {...field} />
+                          <Input type="number" min={0} 
+                            placeholder="Employees"
+                            {...field}
+                            value={field.value ?? ""} 
+                            />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -238,7 +252,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input placeholder="********" type="password" {...field} />
+                      <PasswordInput placeholder="********" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -251,12 +265,34 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Confirm password</FormLabel>
                     <FormControl>
-                      <Input placeholder="********" type="password" {...field} />
+                      <PasswordInput placeholder="********" type="password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex gap-2 items-center">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel>I accept the terms and conditions</FormLabel>
+                    </div>
+                    <FormDescription>
+                      By signing up you agree to our <Link href="/terms" className="text-primary hover:underline">terms and conditions</Link>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button type="submit">Sign up</Button>
             </form>
           </Form>
